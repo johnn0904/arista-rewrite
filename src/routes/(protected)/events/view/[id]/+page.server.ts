@@ -215,3 +215,4 @@ export const actions = {
 		throw redirect(303, "/events");
 	}
 };
+// Added undo feature for event completion and credits
