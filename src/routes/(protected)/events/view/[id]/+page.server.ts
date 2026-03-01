@@ -107,6 +107,24 @@ export const actions = {
 		);
 		console.log("created_credits: ", created_credits);
 	},
+	undoCreditForUser: async ({ request, locals, params }) => {
+		if (!locals.user) error(401, "User not logged in.");
+		if (!isOnCommittee(locals.user as RecievedUser, "events")) {
+			error(401, "User is not a member of the events committee.");
+		}
+
+		const json = await request.json();
+		const credit_id = json.credit_id;
+
+		try {
+			// Delete the credit record
+			await locals.pb.collection("credits").delete(credit_id);
+			console.log("Credit undone: ", credit_id);
+		} catch (err: unknown) {
+			console.error(err);
+			handleGenericError(err);
+		}
+	},
 	mark_event_as_completed: async ({ request, locals, params }) => {
 		const event_id = params.id;
 
@@ -125,6 +143,24 @@ export const actions = {
 			},
 			{ requestKey: null }
 		);
+	},
+	undoMarkEventAsCompleted: async ({ request, locals, params }) => {
+		const event_id = params.id;
+
+		if (!locals.user) error(401, "User not logged in.");
+		if (!isOnCommittee(locals.user as RecievedUser, "events")) {
+			error(401, "User is not a member of the events committee.");
+		}
+
+		try {
+			await locals.pb.collection<RecievedEvent>("events").update(event_id, {
+				isComplete: false
+			});
+			console.log("Event reopened: ", event_id);
+		} catch (err: unknown) {
+			console.error(err);
+			handleGenericError(err);
+		}
 	},
 	update_event: async ({ request, locals, params }) => {
 		const event_id = params.id;
